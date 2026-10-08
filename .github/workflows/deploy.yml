@@ -37,16 +37,43 @@ jobs:
         shell: powershell
         run: |
           echo "Deploying to Prod environment..."
-          Copy-Item -Path prod\* -Destination C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\prod\ -Recurse -Force
           cd C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\prod
           
-          # Rollback preparation step: copy current state if rollback is needed
+          # Rollback preparation: back up BEFORE overwriting anything
           Copy-Item docker-compose.yml docker-compose.yml.bak -ErrorAction SilentlyContinue
+          echo "Backed up current docker-compose.yml"
           
-          # Bring up new stack
+          # Now copy the new files from checkout
+          Copy-Item -Path $env:GITHUB_WORKSPACE\prod\* -Destination . -Recurse -Force
+          
+          echo "Starting prod database..."
+          docker compose up -d db
+          
+          echo "Waiting for db to become healthy (max 3 minutes)..."
+          $timeout = 180
+          $start = Get-Date
+          $healthy = $false
+          while (((Get-Date) - $start).TotalSeconds -lt $timeout) {
+            $dbStatus = docker inspect -f '{{.State.Health.Status}}' prod-supabase-db-1
+            if ($dbStatus -match "healthy") {
+              $healthy = $true
+              break
+            }
+            Start-Sleep -Seconds 5
+          }
+          if (-not $healthy) {
+            echo "Database failed to become healthy within 3 minutes. Check logs:"
+            docker logs prod-supabase-db-1 --tail 50
+            echo "Rolling back to previous docker-compose.yml..."
+            Move-Item -Force docker-compose.yml.bak docker-compose.yml
+            docker compose up -d
+            exit 1
+          }
+          
+          echo "Database is healthy. Bringing up the rest of the stack..."
           docker compose up -d --build
           
-          echo "Verifying prod deployment..."
+          echo "Verifying prod REST API container..."
           Start-Sleep -Seconds 10
           $status = docker inspect -f '{{.State.Running}}' prod-supabase-rest-1
           if ($status -notmatch "true") {
@@ -64,7 +91,6 @@ jobs:
         run: |
           echo "Applying migrations to database..."
           # In a real scenario, you'd use supabase CLI here
-          # supabase db push --db-url postgresql://postgres:${POSTGRES_PASSWORD}@127.0.0.1:5433/postgres
           echo "Simulating migration push..."
           Get-ChildItem -Path supabase/migrations/
 
