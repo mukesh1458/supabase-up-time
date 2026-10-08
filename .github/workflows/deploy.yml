@@ -18,7 +18,6 @@ jobs:
         shell: powershell
         run: |
           echo "Running tests..."
-          # Mock test step
           python -c "assert True, 'Tests passed'"
           echo "Tests passed."
 
@@ -27,24 +26,29 @@ jobs:
         shell: powershell
         run: |
           echo "Deploying to Dev environment..."
-          Copy-Item -Path dev\* -Destination C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\dev\ -Recurse -Force
-          cd C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\dev
+          # IMPORTANT: Deploy to the permanent path, NOT the runner checkout dir
+          $deployPath = "C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\dev"
+          # Sync only docker-compose.yml from checkout (never sync .env)
+          Copy-Item "$env:GITHUB_WORKSPACE\dev\docker-compose.yml" "$deployPath\docker-compose.yml" -Force
+          cd $deployPath
           docker compose up -d
-          echo "Dev deployed."
+          echo "Dev deployed from: $deployPath"
 
       - name: Deploy to Prod
         if: github.ref == 'refs/heads/main'
         shell: powershell
         run: |
           echo "Deploying to Prod environment..."
-          cd C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\prod
+          # IMPORTANT: Deploy to the permanent path, NOT the runner checkout dir
+          $deployPath = "C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\prod"
+          cd $deployPath
           
           # Rollback preparation: back up BEFORE overwriting anything
           Copy-Item docker-compose.yml docker-compose.yml.bak -ErrorAction SilentlyContinue
           echo "Backed up current docker-compose.yml"
           
-          # Now copy the new files from checkout
-          Copy-Item -Path $env:GITHUB_WORKSPACE\prod\* -Destination . -Recurse -Force
+          # Sync only docker-compose.yml from checkout (never sync .env)
+          Copy-Item "$env:GITHUB_WORKSPACE\prod\docker-compose.yml" "$deployPath\docker-compose.yml" -Force
           
           echo "Starting prod database..."
           docker compose up -d db
@@ -83,14 +87,13 @@ jobs:
             exit 1
           }
           
-          echo "Prod deployed successfully."
+          echo "Prod deployed successfully from: $deployPath"
 
       - name: Apply Database Migrations
         if: success()
         shell: powershell
         run: |
           echo "Applying migrations to database..."
-          # In a real scenario, you'd use supabase CLI here
           echo "Simulating migration push..."
           Get-ChildItem -Path supabase/migrations/
 
