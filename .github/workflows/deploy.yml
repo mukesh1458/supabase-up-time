@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Basic Tests
-        shell: bash
+        shell: pwsh
         run: |
           echo "Running tests..."
           # Mock test step
@@ -24,7 +24,7 @@ jobs:
 
       - name: Deploy to Dev
         if: github.ref == 'refs/heads/dev'
-        shell: bash
+        shell: pwsh
         env:
           POSTGRES_PASSWORD: ${{ secrets.DEV_POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.DEV_JWT_SECRET }}
@@ -38,7 +38,7 @@ jobs:
 
       - name: Deploy to Prod
         if: github.ref == 'refs/heads/main'
-        shell: bash
+        shell: pwsh
         env:
           POSTGRES_PASSWORD: ${{ secrets.PROD_POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
@@ -46,27 +46,28 @@ jobs:
           echo "Deploying to Prod environment..."
           cd prod
           # Rollback preparation step: copy current state if rollback is needed
-          cp docker-compose.yml docker-compose.yml.bak || true
+          Copy-Item docker-compose.yml docker-compose.yml.bak -ErrorAction SilentlyContinue
           
           # Bring up new stack
           docker compose up -d --build
           
           echo "Verifying prod deployment..."
           sleep 10
-          if ! docker inspect -f '{{.State.Running}}' prod-supabase-rest-1 | grep "true"; then
+          $status = docker inspect -f '{{.State.Running}}' prod-supabase-rest-1
+          if ($status -notmatch "true") {
             echo "Prod deployment failed, rolling back!"
-            mv docker-compose.yml.bak docker-compose.yml
+            Move-Item -Force docker-compose.yml.bak docker-compose.yml
             docker compose up -d
             exit 1
-          fi
+          }
           
           echo "Prod deployed successfully."
 
       - name: Apply Database Migrations
-        shell: bash
+        shell: pwsh
         run: |
           echo "Applying migrations..."
           # In a real setup, we would use Supabase CLI:
           # supabase db push --db-url postgresql://postgres:${POSTGRES_PASSWORD}@127.0.0.1:5433/postgres
           echo "Simulating migration push..."
-          ls -la supabase/migrations/
+          Get-ChildItem -Path supabase/migrations/
