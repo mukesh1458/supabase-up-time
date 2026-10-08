@@ -1,11 +1,15 @@
-#!/bin/bash
+﻿#!/bin/bash
 # simulate_failure.sh
 # Stops the container cleanly to simulate an outage for the watchdog to fix.
 
-ENV="${1:-dev}"
+ENV="$1"
+if [ -z "$ENV" ]; then
+    ENV="dev"
+fi
 REST_CONTAINER="${ENV}-supabase-rest-1"
 
 echo "Looking for ${ENV} REST container..."
+echo "CRITICAL ALERT: Outage detected, paging the DevOps team..."
 
 if ! docker ps | grep -q "$REST_CONTAINER"; then
     echo "ERROR: No Supabase REST container found to kill."
