@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Basic Tests
-        shell: pwsh
+        shell: powershell
         run: |
           echo "Running tests..."
           # Mock test step
@@ -24,7 +24,7 @@ jobs:
 
       - name: Deploy to Dev
         if: github.ref == 'refs/heads/dev'
-        shell: pwsh
+        shell: powershell
         env:
           POSTGRES_PASSWORD: ${{ secrets.DEV_POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.DEV_JWT_SECRET }}
@@ -38,7 +38,7 @@ jobs:
 
       - name: Deploy to Prod
         if: github.ref == 'refs/heads/main'
-        shell: pwsh
+        shell: powershell
         env:
           POSTGRES_PASSWORD: ${{ secrets.PROD_POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
@@ -64,7 +64,7 @@ jobs:
           echo "Prod deployed successfully."
 
       - name: Apply Database Migrations
-        shell: pwsh
+        shell: powershell
         run: |
           echo "Applying migrations..."
           # In a real setup, we would use Supabase CLI:
