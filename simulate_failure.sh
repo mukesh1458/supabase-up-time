@@ -8,7 +8,7 @@ CONTAINER_NAME=$(docker ps --format "{{.Names}}" | grep prod-supabase-rest)
 
 if [ -z "$CONTAINER_NAME" ]; then
     echo "No prod-supabase-rest container found. Are you running 'docker compose up' in prod?"
-    # Fallback to dev for demo purposes if prod is down
+
     CONTAINER_NAME=$(docker ps --format "{{.Names}}" | grep dev-supabase-rest)
 fi
 
