@@ -1,4 +1,4 @@
-# Supabase High-Availability Demo (Aigerdata / Ristara)
+ Supabase High-Availability Demo (Aigerdata / Ristara)
 
 This repository contains the architecture, scripts, and CI/CD pipelines to prove that self-hosted Supabase can replace Firebase and comfortably achieve a 99.9% uptime SLA for Ristara.
 
