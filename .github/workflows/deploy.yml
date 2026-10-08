@@ -31,8 +31,7 @@ jobs:
         run: |
           echo "Deploying to Dev environment..."
           cd dev
-          # The .env file would normally be generated or populated here using secrets
-          # For self-hosted runner on the same machine, we just use docker compose up
+          Copy-Item C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\dev\.env .\.env -ErrorAction SilentlyContinue
           docker compose up -d
           echo "Dev deployed."
 
@@ -45,6 +44,7 @@ jobs:
         run: |
           echo "Deploying to Prod environment..."
           cd prod
+          Copy-Item C:\Users\ADMIN\Desktop\aws_hackthon\supabase-uptime-demo\prod\.env .\.env -ErrorAction SilentlyContinue
           # Rollback preparation step: copy current state if rollback is needed
           Copy-Item docker-compose.yml docker-compose.yml.bak -ErrorAction SilentlyContinue
           
@@ -71,3 +71,4 @@ jobs:
           # supabase db push --db-url postgresql://postgres:${POSTGRES_PASSWORD}@127.0.0.1:5433/postgres
           echo "Simulating migration push..."
           Get-ChildItem -Path supabase/migrations/
+
