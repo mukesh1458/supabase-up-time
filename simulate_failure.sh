@@ -1,32 +1,22 @@
 #!/bin/bash
 # simulate_failure.sh
-# Intentionally kills a critical Supabase container to demonstrate auto-recovery.
+# Stops the container cleanly to simulate an outage for the watchdog to fix.
 
-echo "Identifying a running Supabase container..."
-# Using rest (PostgREST) as our target
-CONTAINER_NAME=$(docker ps --format "{{.Names}}" | grep prod-supabase-rest)
+ENV="${1:-dev}"
+REST_CONTAINER="${ENV}-supabase-rest-1"
 
-if [ -z "$CONTAINER_NAME" ]; then
-    echo "No prod-supabase-rest container found. Are you running 'docker compose up' in prod?"
-    # Fallback to dev for demo purposes if prod is down
-    CONTAINER_NAME=$(docker ps --format "{{.Names}}" | grep dev-supabase-rest)
-fi
+echo "Looking for ${ENV} REST container..."
 
-if [ -z "$CONTAINER_NAME" ]; then
-    echo "Error: No Supabase REST container found to kill."
+if ! docker ps | grep -q "$REST_CONTAINER"; then
+    echo "ERROR: No Supabase REST container found to kill."
     exit 1
 fi
 
-echo "Found container: $CONTAINER_NAME"
-echo "Simulating sudden failure (kill)..."
-docker kill $CONTAINER_NAME
+echo "Found container: $REST_CONTAINER"
+echo "Simulating outage via 'docker stop'..."
 
-echo "Container killed. Watch the health.log and docker ps to observe Docker's unless-stopped policy recovering the service."
-echo "Tailing docker events for container start..."
-docker events --filter event=start --filter container=$CONTAINER_NAME &
-EVENTS_PID=$!
+STOP_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+docker stop "$REST_CONTAINER" >/dev/null
 
-sleep 10
-kill $EVENTS_PID
-
-echo "Failure simulation complete. Check uptime_calculator.py to see the impact on uptime."
+echo "Container stopped at $STOP_TIME."
+echo "Failure simulation complete. Watchdog should recover it shortly."
