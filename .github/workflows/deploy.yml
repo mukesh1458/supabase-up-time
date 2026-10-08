@@ -25,9 +25,6 @@ jobs:
       - name: Deploy to Dev
         if: github.ref == 'refs/heads/dev'
         shell: powershell
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.DEV_POSTGRES_PASSWORD }}
-          JWT_SECRET: ${{ secrets.DEV_JWT_SECRET }}
         run: |
           echo "Deploying to Dev environment..."
           cd dev
@@ -38,9 +35,6 @@ jobs:
       - name: Deploy to Prod
         if: github.ref == 'refs/heads/main'
         shell: powershell
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.PROD_POSTGRES_PASSWORD }}
-          JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
         run: |
           echo "Deploying to Prod environment..."
           cd prod
