@@ -51,3 +51,5 @@ Follow these steps to demonstrate the system to the client:
 ### Step 4: CI/CD & Migrations
 1. Show the client `.github/workflows/deploy.yml`. 
 2. Highlight the `Apply Database Migrations` step utilizing the `supabase/migrations` folder, proving that schema changes are tracked in version control and applied safely, eliminating manual database edits that often cause outages.
+
+<!-- Trigger Dev CI/CD Deploy -->
